@@ -1,4 +1,5 @@
 require("dotenv").config();
+require("./src/config/database"); // Import the database connection 
 
 const app = require("./src/app");
 
