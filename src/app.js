@@ -1,3 +1,5 @@
+const studentRoutes = require("./routes/student.routes");
+
 const express = require("express");
 
 
@@ -5,6 +7,9 @@ const app = express();
 
 //middleware to parse JSON data
 app.use(express.json());
+
+// student routes
+app.use("/api/students", studentRoutes);
 
 // test route
 app.get("/", (req, res) => {
@@ -15,4 +20,3 @@ app.get("/", (req, res) => {
 });
 
 module.exports = app;
-    
