@@ -8,15 +8,19 @@ const app = express();
 //middleware to parse JSON data
 app.use(express.json());
 
-// student routes
-app.use("/api/students", studentRoutes);
+// create a route for student API 
+app.use("/api/v1/students", studentRoutes);
 
 // test route
+// app.get("/", (req, res) => {
+//     res.status(200).json({
+//         sucess: true,
+//         massage: "Student API is running successfully"
+//     });
+// });
+
 app.get("/", (req, res) => {
-    res.status(200).json({
-        sucess: true,
-        massage: "Student API is running successfully"
-    });
+    res.send("THIS IS MY APP");
 });
 
 module.exports = app;

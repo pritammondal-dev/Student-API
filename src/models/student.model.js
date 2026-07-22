@@ -1,7 +1,7 @@
 const db = require("../config/database");
 
 // Create a Student model
-const createStudent = (studentData, callback) => {
+const createStudent = async (studentData) => {
     const sql = `
         INSERT INTO students 
         (student_id, name, email, phone, age)
@@ -16,9 +16,34 @@ const createStudent = (studentData, callback) => {
             studentData.age
         ];
 
-        db.query(sql, values, callback);
+        const [result] = await db.query(sql, values);
+        return result;
+};
+
+
+// Get all students
+
+const getAllstudents = async () => {
+        const sql = `
+           SELECT
+    id,
+    student_id,
+    name,
+    email,
+    phone,
+    age,
+    created_at,
+    updated_at
+FROM students
+ORDER BY id DESC;
+        `;
+    const [rows] = await db.query(sql);
+    return rows;
 };
 
 module.exports = {
-    createStudent
-}
+    createStudent,
+    getAllstudents
+};
+
+
