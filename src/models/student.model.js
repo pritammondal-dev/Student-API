@@ -94,11 +94,26 @@ const updateStudent = async(studentId, studentData) => {
 
     return result;
 };
+
+// delete student data
+
+const deleteStudent = async(studentId, studentData) => {
+    const sql = `
+    DELETE FROM students 
+    WHERE id = ?
+    `;
+
+    const [result] = await db.execute(sql, [studentId]);
+
+    return  result;
+};
+
 module.exports = {
     createStudent,
     getAllStudents,
     getStudentById,
-    updateStudent
+    updateStudent,
+    deleteStudent
 };
 
 

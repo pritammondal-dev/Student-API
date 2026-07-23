@@ -18,7 +18,9 @@ router.get("/:id", StudentController.getStudentById);
 //update student data
 router.put("/:id", StudentController.updateStudent);
 
-router 
+
+// Delete a student data
+router.delete("/:id", StudentController.deleteStudent);
 
 // console.log(StudentController);
 module.exports = router;

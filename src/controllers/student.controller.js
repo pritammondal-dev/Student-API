@@ -120,6 +120,38 @@ const getStudentById = async (req, res) => {
     }
 };
 
+// delete student data
+
+const deleteStudent = async (req, res) => {
+
+    try{
+
+        const studentId = req.params.id;
+
+        const result= await StudentModel.deleteStudent(studentId);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Student not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Student deleted successfully"
+        });
+
+    }catch (err) {
+        console.error(err);
+
+        return res.status(500).json({
+            success: false,
+            message: err.message
+        });
+    }
+};
+
 
 
 
@@ -127,6 +159,7 @@ module.exports = {
     createStudent,
     getAllStudents,
     getStudentById,
-    updateStudent
+    updateStudent,
+    deleteStudent
 };
 
