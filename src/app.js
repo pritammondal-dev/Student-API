@@ -12,6 +12,15 @@ app.use(express.json());
 // create a route for student API 
 app.use("/api/v1/students", studentRoutes);
 
+// 404 handler
+app.use ((req,res) =>{
+    return res,status(404).json({
+        success: false,
+        message: "Rout not found"
+    });
+});
+
+// Global error handler
 app.use(errorHandler);
 
 // test route
