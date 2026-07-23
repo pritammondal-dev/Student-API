@@ -23,7 +23,7 @@ const createStudent = async (studentData) => {
 
 // Get all students
 
-const getAllstudents = async () => {
+const getAllStudents = async () => {
         const sql = `
            SELECT
     id,
@@ -64,10 +64,41 @@ const getStudentById = async (studentId) => {
     return rows.length > 0 ? rows[0] : null;
 };
 
+
+// Update student data
+
+const updateStudent = async(studentId, studentData) => {
+
+    const sql = `
+    UPDATE students 
+    SET 
+        student_id = ?,
+        name = ?,
+        email = ?,
+        phone = ?,
+        age = ?
+        WHERE id = ?    
+    `;
+
+
+    const values = [
+        studentData.student_id,
+        studentData.name,
+        studentData.email,
+        studentData.phone,
+        studentData.age,
+        studentId
+    ];
+
+    const [result] = await db.execute(sql, values);
+
+    return result;
+};
 module.exports = {
     createStudent,
-    getAllstudents,
-    getStudentById
+    getAllStudents,
+    getStudentById,
+    updateStudent
 };
 
 

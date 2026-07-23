@@ -5,7 +5,7 @@ const createStudent = async (req, res) => {
     const studentData = req.body;
 
     try {
-        const result = await StudentModel.createStudent(req.body);
+        const result = await StudentModel.createStudent(studentData);
         return res.status(201).json({
             success: true,
             message: "Student created successfully",
@@ -22,10 +22,10 @@ const createStudent = async (req, res) => {
 
 // Get all students
 
-const getAllstudents = async (req, res) => {
+const getAllStudents = async (req, res) => {
 
     try{
-        const students = await StudentModel.getAllstudents();
+        const students = await StudentModel.getAllStudents();
 
         return res.status(200).json({
             success: true,
@@ -58,14 +58,14 @@ const getStudentById = async (req, res) => {
 
         if (!student){
             return res.status(404).json({
-                sucess: false,
+                success: false,
                 message: "Student not found"
             });
         }
 
 
         return res.status(200).json({
-            sucess: true,
+            success: true,
             message: "Student retrieved successfully",
             data: student
         });
@@ -81,9 +81,52 @@ const getStudentById = async (req, res) => {
 
 };
 
+// Update students data
+ const updateStudent = async (req, res) => {
+    
+    try{
+
+        const studentId =req.params.id;
+
+        const result =await StudentModel.updateStudent(
+            studentId,
+            req.body
+        );
+
+        if (result.affectedRows === 0) {
+
+            return res.status(404).json({
+                success: false,
+                message: "Student not found"
+            });
+
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Student updated successfully"
+        });
+
+    } catch (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+        success: false,
+        message: err.message
+        
+        });
+    
+    }
+};
+
+
+
+
 module.exports = {
     createStudent,
-    getAllstudents,
-    getStudentById
+    getAllStudents,
+    getStudentById,
+    updateStudent
 };
 
