@@ -41,9 +41,33 @@ ORDER BY id DESC;
     return rows;
 };
 
+
+
+// get student by ID
+const getStudentById = async (studentId) => {
+    const sql = `
+        SELECT
+    id,
+    student_id,
+    name,   
+    email,
+    phone,
+    age,
+    created_at,
+    updated_at
+    FROM students
+    WHERE id = ?
+    `;
+
+    const [rows] = await db.execute(sql, [studentId]);
+
+    return rows.length > 0 ? rows[0] : null;
+};
+
 module.exports = {
     createStudent,
-    getAllstudents
+    getAllstudents,
+    getStudentById
 };
 
 

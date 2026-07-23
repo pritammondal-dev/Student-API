@@ -12,15 +12,13 @@ app.use(express.json());
 app.use("/api/v1/students", studentRoutes);
 
 // test route
-// app.get("/", (req, res) => {
-//     res.status(200).json({
-//         sucess: true,
-//         massage: "Student API is running successfully"
-//     });
-// });
-
 app.get("/", (req, res) => {
-    res.send("THIS IS MY APP");
+    res.status(200).json({
+        sucess: true,
+        massage: "Student API is running successfully"
+    });
 });
+
+//  
 
 module.exports = app;

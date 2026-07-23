@@ -46,7 +46,44 @@ const getAllstudents = async (req, res) => {
 };
 
 
+// get student by ID
+
+const getStudentById = async (req, res) => {
+    
+
+    try {
+        const studentId = req.params.id;
+
+        const student = await StudentModel.getStudentById(studentId);
+
+        if (!student){
+            return res.status(404).json({
+                sucess: false,
+                message: "Student not found"
+            });
+        }
+
+
+        return res.status(200).json({
+            sucess: true,
+            message: "Student retrieved successfully",
+            data: student
+        });
+
+    }catch (err) {
+        console.error(err);
+
+        return res.status(500).json({
+            success: false,
+            message: "An error occurred while retrieving the student",
+        });
+    }
+
+};
+
 module.exports = {
     createStudent,
-    getAllstudents
+    getAllstudents,
+    getStudentById
 };
+
