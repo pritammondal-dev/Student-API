@@ -80,8 +80,8 @@ PORT=5000
 
 DB_HOST=localhost
 DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=
+DB_USER=your_username
+DB_PASSWORD= your_password
 DB_NAME=student_management
 ```
 
@@ -92,7 +92,7 @@ DB_NAME=student_management
 Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone < https://github.com/pritammondal-dev/Student-API.git >
 ```
 
 Move into the project:
