@@ -1,7 +1,7 @@
 const StudentModel = require("../models/student.model");
 
 // Create a new student
-const createStudent = async (req, res) => {
+const createStudent = async (req, res, next) => {
     const studentData = req.body;
 
     try {
@@ -12,17 +12,13 @@ const createStudent = async (req, res) => {
             studentID: result.insertId
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({
-            success: false,
-            message: err.message,
-        });
+        next(err);
     }
 };
 
 // Get all students
 
-const getAllStudents = async (req, res) => {
+const getAllStudents = async (req, res, next) => {
 
     try{
         const students = await StudentModel.getAllStudents();
@@ -36,19 +32,14 @@ const getAllStudents = async (req, res) => {
 
     } catch (err){
 
-        console.error(err);
-
-        return res.status(500).json({
-            success: false,
-            message: "An error occurred while retrieving students",
-        });
+       next(err);
     }
 };
 
 
 // get student by ID
 
-const getStudentById = async (req, res) => {
+const getStudentById = async (req, res, next) => {
     
 
     try {
@@ -71,18 +62,13 @@ const getStudentById = async (req, res) => {
         });
 
     }catch (err) {
-        console.error(err);
-
-        return res.status(500).json({
-            success: false,
-            message: "An error occurred while retrieving the student",
-        });
+        next(err);
     }
 
 };
 
 // Update students data
- const updateStudent = async (req, res) => {
+ const updateStudent = async (req, res, next) => {
     
     try{
 
@@ -109,20 +95,14 @@ const getStudentById = async (req, res) => {
 
     } catch (err) {
 
-        console.error(err);
-
-        return res.status(500).json({
-        success: false,
-        message: err.message
-        
-        });
+      next(err);
     
     }
 };
 
 // delete student data
 
-const deleteStudent = async (req, res) => {
+const deleteStudent = async (req, res, next) => {
 
     try{
 
@@ -143,12 +123,7 @@ const deleteStudent = async (req, res) => {
         });
 
     }catch (err) {
-        console.error(err);
-
-        return res.status(500).json({
-            success: false,
-            message: err.message
-        });
+       next(err);
     }
 };
 

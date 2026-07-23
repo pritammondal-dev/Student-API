@@ -1,4 +1,5 @@
 const studentRoutes = require("./routes/student.routes");
+const errorHandler = require("./middlewares/error.middleware");
 
 const express = require("express");
 
@@ -10,6 +11,8 @@ app.use(express.json());
 
 // create a route for student API 
 app.use("/api/v1/students", studentRoutes);
+
+app.use(errorHandler);
 
 // test route
 app.get("/", (req, res) => {
