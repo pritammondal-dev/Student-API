@@ -3,10 +3,13 @@ const express = require("express");
 const router = express.Router();
 
 const StudentController = require("../controllers/student.controller");
+const {
+    validateCreateStudent
+} = require("../middlewares/validate.middleware");
 
 
 // Create a new student
-router.post("/", StudentController.createStudent);
+router.post("/", validateCreateStudent, StudentController.createStudent);
 
 
 // Get all students
