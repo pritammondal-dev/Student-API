@@ -7,23 +7,25 @@ const {
     validateCreateStudent
 } = require("../middlewares/validate.middleware");
 
+const authenticateToken = require("../middlewares/auth.middleware");
+
 
 // Create a new student
 router.post("/", validateCreateStudent, StudentController.createStudent);
 
 
 // Get all students
-router.get("/", StudentController.getAllStudents);
+router.get("/",authenticateToken, StudentController.getAllStudents);
 
 // get student by ID
-router.get("/:id", StudentController.getStudentById);
+router.get("/:id",authenticateToken, StudentController.getStudentById);
 
 //update student data
-router.put("/:id", StudentController.updateStudent);
+router.put("/:id", authenticateToken, StudentController.updateStudent);
 
 
 // Delete a student data
-router.delete("/:id", StudentController.deleteStudent);
+router.delete("/:id", authenticateToken, StudentController.deleteStudent);
 
 // console.log(StudentController);
 module.exports = router;

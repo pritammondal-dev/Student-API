@@ -16,10 +16,11 @@ const validateCreateStudent = [
         .withMessage("Please enter a valid email"),
 
     body("phone")
-        .isInt(true)
         .isLength({ min: 10, max: 10 })
-        .withMessage("Phone number must be 10 digits"),
-
+        .withMessage("Phone number must be exactly 10 digits")
+        .isNumeric()
+        .withMessage("Phone number must contain only numbers"),
+        
     body("age")
         .isInt({ min: 1 })
         .withMessage("Age must be greater than 0"),
