@@ -1,4 +1,5 @@
 const User = require("../models/user.model");
+const createActivityLog = require("../utils/activityLogger");
 const bcrypt = require("bcryptjs");
 const generateToken = require("../utils/generateToken");
 
@@ -52,7 +53,6 @@ const register = async (req, res, next) => {
         email: user.email,
       },
     });
-
   } catch (error) {
     next(error);
   }
@@ -86,22 +86,50 @@ const login = async (req, res, next) => {
         message: "Invalid password",
       });
     }
+    // Log admin login
+    await createActivityLog({
+      userId: user.id,
+      userType: "admin",
+      action: "login",
+      req,
+    });
 
     // Generate JWT
-    const token = generateToken(user);
+    const token = generateToken(user, "admin");
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
       token,
     });
+  } catch (error) {
+    next(error);
+  }
+};
 
+// =============================
+// Logout User
+// =============================
+const logout = async (req, res, next) => {
+  try {
+    await createActivityLog({
+      userId: req.user.id,
+      userType: "admin",
+      action: "logout",
+      req,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logout successful",
+    });
   } catch (error) {
     next(error);
   }
 };
 
 module.exports = {
-    register,
-    login
+  register,
+  login,
+  logout,
 };

@@ -3,8 +3,8 @@ require("dotenv").config();
 const sequelize = require("./src/config/database");
 
 // Load Models
-require("./src/models/student.model");
-require("./src/models/user.model");
+// Load Models and Associations
+require("./src/models");
 
 const app = require("./src/app");
 

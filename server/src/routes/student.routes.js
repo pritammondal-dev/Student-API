@@ -3,32 +3,83 @@ const express = require("express");
 const router = express.Router();
 
 const StudentController = require("../controllers/student.controller");
+
 const {
-    validateCreateStudent
+  validateCreateStudent,
 } = require("../middlewares/validate.middleware");
 
 const authenticateToken = require("../middlewares/auth.middleware");
+const authorizeRoles = require("../middlewares/role.middleware");
 
 
-// Create a new student
-router.post("/", validateCreateStudent, StudentController.createStudent);
+// =============================
+// Student Registration
+// =============================
+router.post(
+  "/",
+  validateCreateStudent,
+  StudentController.createStudent
+);
 
 
-// Get all students
-router.get("/",authenticateToken, StudentController.getAllStudents);
+// =============================
+// Student Login
+// =============================
+router.post(
+  "/login",
+  StudentController.loginStudent
+);
 
-// get student by ID
-router.get("/:studentId",authenticateToken, StudentController.getStudentById);
 
-//update student data
-router.put("/:studentId", authenticateToken, StudentController.updateStudent);
+// =============================
+// Admin Only - Get All Students
+// =============================
+router.get(
+  "/",
+  authenticateToken,
+  authorizeRoles("admin"),
+  StudentController.getAllStudents
+);
 
 
-// Delete a student data
-router.delete("/:studentId", authenticateToken, StudentController.deleteStudent);
+// =============================
+// Admin Only - Get Student
+// =============================
+router.get(
+  "/:studentId",
+  authenticateToken,
+  authorizeRoles("admin"),
+  StudentController.getStudentById
+);
 
-// console.log(StudentController);
+
+// =============================
+// Admin Only - Update Student
+// =============================
+router.put(
+  "/:studentId",
+  authenticateToken,
+  authorizeRoles("admin"),
+  StudentController.updateStudent
+);
+
+
+// =============================
+// Admin Only - Delete Student
+// =============================
+router.delete(
+  "/:studentId",
+  authenticateToken,
+  authorizeRoles("admin"),
+  StudentController.deleteStudent
+);
+
+router.post(
+  "/logout",
+  authenticateToken,
+  authorizeRoles("student"),
+  StudentController.studentLogout
+);
+
+
 module.exports = router;
-
-
-
