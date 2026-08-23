@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { Op } = require("sequelize");
 const razorpay = require("../config/razorpay");
 const Document = require("../models/document.model");
 const Purchase = require("../models/purchase.model");
@@ -28,7 +29,7 @@ const createPaymentOrder = async (req, res, next) => {
       });
     }
 
-    // Check existing purchase
+    // Check existing purchase for THIS student
     const existingPurchase = await Purchase.findOne({
       where: {
         student_id: req.user.id,
@@ -36,6 +37,7 @@ const createPaymentOrder = async (req, res, next) => {
       },
     });
 
+    // Already purchased
     if (existingPurchase && existingPurchase.status === "paid") {
       return res.status(400).json({
         success: false,
@@ -43,10 +45,27 @@ const createPaymentOrder = async (req, res, next) => {
       });
     }
 
+    // Mark old unfinished payment attempts as failed
+    if (existingPurchase) {
+      await PaymentLog.update(
+        {
+          status: "failed",
+          payment_method: "razorpay",
+        },
+        {
+          where: {
+            student_id: req.user.id,
+            purchase_id: existingPurchase.id,
+            status: "created",
+          },
+        },
+      );
+    }
+
     // Convert price to paise
     const amountInPaise = Math.round(Number(document.price) * 100);
 
-    // Razorpay order
+    // Create Razorpay order
     const order = await razorpay.orders.create({
       amount: amountInPaise,
       currency: "INR",
@@ -61,6 +80,8 @@ const createPaymentOrder = async (req, res, next) => {
         amount: document.price,
         status: "pending",
         order_id: order.id,
+        payment_id: null,
+        purchased_at: null,
       });
     } else {
       purchase = await Purchase.create({
@@ -72,15 +93,15 @@ const createPaymentOrder = async (req, res, next) => {
       });
     }
 
-    // Create payment log
+    // Create new payment log
     await PaymentLog.create({
       student_id: req.user.id,
       purchase_id: purchase.id,
       order_id: order.id,
       amount: document.price,
       status: "created",
+      payment_method: "razorpay",
     });
-
     return res.status(201).json({
       success: true,
       message: "Payment order created successfully",
@@ -206,10 +227,7 @@ const verifyPayment = async (req, res, next) => {
 // =============================
 const paymentFailed = async (req, res, next) => {
   try {
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-    } = req.body;
+    const { razorpay_order_id, razorpay_payment_id } = req.body;
 
     if (!razorpay_order_id) {
       return res.status(400).json({
@@ -263,16 +281,242 @@ const paymentFailed = async (req, res, next) => {
         status: "failed",
       },
     });
-
   } catch (error) {
     next(error);
   }
 };
 
+// =============================
+// Get Student Payment History
+// =============================
+const getPaymentHistory = async (req, res, next) => {
+  try {
+    console.log("=================================");
+    console.log("PAYMENT HISTORY REQUEST");
+    console.log("Logged in user:", req.user);
+    console.log("Student ID used:", req.user.id);
+    console.log("=================================");
+
+    const payments = await PaymentLog.findAll({
+      where: {
+        student_id: req.user.id,
+      },
+
+      include: [
+        {
+          model: Purchase,
+          as: "purchase",
+          include: [
+            {
+              model: Document,
+              as: "document",
+              attributes: ["id", "title", "subject"],
+            },
+          ],
+        },
+      ],
+
+      order: [["created_at", "DESC"]],
+    });
+
+    const paymentHistory = payments.map((payment) => ({
+      payment_id: payment.payment_id,
+      order_id: payment.order_id,
+      amount: payment.amount,
+      status: payment.status,
+      payment_method: payment.payment_method,
+      created_at: payment.created_at,
+
+      document: payment.purchase?.document
+        ? {
+            id: payment.purchase.document.id,
+            title: payment.purchase.document.title,
+            subject: payment.purchase.document.subject,
+          }
+        : null,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment history retrieved successfully",
+      total: paymentHistory.length,
+      data: paymentHistory,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// =============================
+// Admin - Get All Payments
+// =============================
+
+const getAllPayments = async (req, res, next) => {
+  try {
+    // =============================
+    // Pagination
+    // =============================
+
+    const page = Math.max(
+      parseInt(req.query.page) || 1,
+      1
+    );
+
+    const requestedLimit =
+      parseInt(req.query.limit) || 10;
+
+    const allowedLimits = [5, 10, 20, 50, 100];
+
+    const limit = allowedLimits.includes(requestedLimit)
+      ? requestedLimit
+      : 10;
+
+    const offset = (page - 1) * limit;
+
+    const { status, search } = req.query;
+
+    // =============================
+    // Filters
+    // =============================
+
+    const paymentWhere = {};
+
+    if (status && status !== "all") {
+      paymentWhere.status = status;
+    }
+
+    // =============================
+    // Get Paginated Payments
+    // =============================
+
+    const {
+      count,
+      rows: payments,
+    } = await PaymentLog.findAndCountAll({
+      where: paymentWhere,
+
+      include: [
+        {
+          model: Purchase,
+          as: "purchase",
+          include: [
+            {
+              model: Document,
+              as: "document",
+              attributes: [
+                "id",
+                "title",
+                "subject",
+              ],
+            },
+          ],
+        },
+      ],
+
+      order: [["created_at", "DESC"]],
+
+      limit,
+      offset,
+    });
+
+    // =============================
+    // Format Payments
+    // =============================
+
+    const paymentHistory = payments.map(
+      (payment) => ({
+        id: payment.id,
+        student_id: payment.student_id,
+        purchase_id: payment.purchase_id,
+        payment_id: payment.payment_id,
+        order_id: payment.order_id,
+        amount: payment.amount,
+        status: payment.status,
+        payment_method: payment.payment_method,
+        created_at: payment.created_at,
+
+        document: payment.purchase?.document
+          ? {
+              id: payment.purchase.document.id,
+              title:
+                payment.purchase.document.title,
+              subject:
+                payment.purchase.document.subject,
+            }
+          : null,
+      })
+    );
+
+    // =============================
+    // Statistics
+    // =============================
+
+    const totalTransactions =
+      await PaymentLog.count();
+
+    const successfulPayments =
+      await PaymentLog.count({
+        where: {
+          status: "success",
+        },
+      });
+
+    const failedPayments =
+      await PaymentLog.count({
+        where: {
+          status: "failed",
+        },
+      });
+
+    const successfulPaymentRecords =
+      await PaymentLog.findAll({
+        where: {
+          status: "success",
+        },
+
+        attributes: ["amount"],
+      });
+
+    const totalRevenue =
+      successfulPaymentRecords.reduce(
+        (total, payment) =>
+          total + Number(payment.amount || 0),
+        0
+      );
+
+    // =============================
+    // Response
+    // =============================
+
+    return res.status(200).json({
+      success: true,
+      message: "All payments retrieved successfully",
+
+      data: paymentHistory,
+
+      pagination: {
+        totalItems: count,
+        currentPage: page,
+        totalPages: Math.ceil(count / limit),
+        limit,
+      },
+
+      statistics: {
+        totalTransactions,
+        successfulPayments,
+        failedPayments,
+        totalRevenue,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
   createPaymentOrder,
   verifyPayment,
   paymentFailed,
-
+  getPaymentHistory,
+  getAllPayments,
 };

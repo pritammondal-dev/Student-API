@@ -81,11 +81,18 @@ const login = async (req, res, next) => {
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid password",
-      });
-    }
+  await createActivityLog({
+    userId: user.id,
+    userType: "admin",
+    action: "failed_login",
+    req,
+  });
+
+  return res.status(401).json({
+    success: false,
+    message: "Invalid password",
+  });
+}
     // Log admin login
     await createActivityLog({
       userId: user.id,

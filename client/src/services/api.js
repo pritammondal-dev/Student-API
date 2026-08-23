@@ -2,15 +2,9 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
-// ========================================
 // Request Interceptor
-// ========================================
-
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -26,10 +20,7 @@ api.interceptors.request.use(
   },
 );
 
-// ========================================
 // Response Interceptor
-// ========================================
-
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -37,9 +28,17 @@ api.interceptors.response.use(
 
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
+      const role = localStorage.getItem("role");
 
-      window.location.href = "/admin/login";
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      localStorage.removeItem("user");
+
+      if (role === "student") {
+        window.location.href = "/student/login";
+      } else {
+        window.location.href = "/admin/login";
+      }
     }
 
     return Promise.reject(error);

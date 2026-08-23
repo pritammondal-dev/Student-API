@@ -111,7 +111,7 @@ const viewDocumentFile = async (req, res, next) => {
   try {
     const { documentId } = req.params;
 
-    // Check whether student has purchased this document
+    // Check purchased document
     const purchase = await Purchase.findOne({
       where: {
         student_id: req.user.id,
@@ -143,22 +143,54 @@ const viewDocumentFile = async (req, res, next) => {
       });
     }
 
-    // Get only the filename stored in database
-    const fileName = path.basename(document.file_url);
+    // ==========================================
+    // Get filename from database
+    // ==========================================
 
-    // Build absolute file path
-    const filePath = path.join(__dirname, "../../uploads", fileName);
+    const fileName = path.basename(
+      document.file_url
+    );
 
-    // Check if file exists
+    // ==========================================
+    // Build absolute uploads path
+    // ==========================================
+
+    const filePath = path.resolve(
+      process.cwd(),
+      "uploads",
+      fileName
+    );
+
+    console.log("=================================");
+    console.log("Document ID:", documentId);
+    console.log("Database file_url:", document.file_url);
+    console.log("File name:", fileName);
+    console.log("Looking for:", filePath);
+    console.log(
+      "File exists:",
+      fs.existsSync(filePath)
+    );
+    console.log("=================================");
+
+    // ==========================================
+    // Check file
+    // ==========================================
+
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
         message: "Document file not found",
+        file: fileName,
       });
     }
 
-    // Determine file type
-    const extension = path.extname(fileName).toLowerCase();
+    // ==========================================
+    // Determine content type
+    // ==========================================
+
+    const extension = path
+      .extname(fileName)
+      .toLowerCase();
 
     let contentType = "application/octet-stream";
 
@@ -171,29 +203,26 @@ const viewDocumentFile = async (req, res, next) => {
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     }
 
-    // Security-related headers
-    res.setHeader("Content-Type", contentType);
+    // ==========================================
+    // Response headers
+    // ==========================================
 
-    // Display in browser instead of forcing download
+    res.setHeader(
+      "Content-Type",
+      contentType
+    );
+
     res.setHeader(
       "Content-Disposition",
-      `inline; filename="${document.file_name}"`,
+      `inline; filename="${document.file_name}"`
     );
 
-    // Prevent caching
-    res.setHeader(
-      "Cache-Control",
-      "no-store, no-cache, must-revalidate, private",
-    );
+    // ==========================================
+    // Send file
+    // ==========================================
 
-    // Stream file
-    const fileStream = fs.createReadStream(filePath);
+    return res.sendFile(filePath);
 
-    fileStream.on("error", (error) => {
-      next(error);
-    });
-
-    fileStream.pipe(res);
   } catch (error) {
     next(error);
   }

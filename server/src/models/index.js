@@ -3,6 +3,7 @@ const Student = require("./student.model");
 const Document = require("./document.model");
 const Purchase = require("./purchase.model");
 const PaymentLog = require("./paymentLog.model");
+const ActivityLog = require("./activityLog.model");
 
 
 // =============================
@@ -90,4 +91,5 @@ module.exports = {
   Document,
   Purchase,
   PaymentLog,
+  ActivityLog,
 };

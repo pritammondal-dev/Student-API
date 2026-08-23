@@ -7,6 +7,14 @@ const PaymentController = require("../controllers/payment.controller");
 const authenticateToken = require("../middlewares/auth.middleware");
 const authorizeRoles = require("../middlewares/role.middleware");
 
+
+router.get(
+  "/",
+  authenticateToken,
+  authorizeRoles("student"),
+  PaymentController.getPaymentHistory
+);
+
 router.post(
   "/create-order",
   authenticateToken,
@@ -26,6 +34,13 @@ router.post(
   authenticateToken,
   authorizeRoles("student"),
   PaymentController.paymentFailed
+);
+
+router.get(
+  "/admin",
+  authenticateToken,
+  authorizeRoles("admin"),
+  PaymentController.getAllPayments
 );
 
 module.exports = router;

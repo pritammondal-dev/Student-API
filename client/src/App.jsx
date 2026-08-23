@@ -1,41 +1,91 @@
 import { Routes, Route } from "react-router-dom";
 
 import LandingPage from "./pages/LandingPage";
-import AdminRegister from "./pages/AdminRegister";
-import AdminLogin from "./pages/AdminLogin";
-import AdminDashboard from "./pages/AdminDashboard";
 
-import ProtectedRoute from "./components/ProtectedRoute";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminRegister from "./pages/admin/AdminRegister";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+
+import StudentLogin from "./pages/student/StudentLogin";
+import StudentDashboard from "./pages/student/StudentDashboard";
+import StudentLibrary from "./pages/student/StudentLibrary";
+import StudentPayments from "./pages/student/StudentPayments";
+import StudentProfile from "./pages/student/StudentProfile";
+import StudentDocumentViewer from "./pages/student/StudentDocumentViewer";
+import StudentPurchases from "./pages/student/StudentPurchases";
+
+import StudentRoute from "./components/StudentRoute";
+import StudentLayout from "./layouts/StudentLayout";
+
+import AdminRoute from "./components/AdminRoute";
+import AdminLayout from "./layouts/AdminLayout";
+import AdminStudents from "./pages/admin/AdminStudents";
+import AdminDocuments from "./pages/admin/AdminDocuments";
+import AdminPayments from "./pages/admin/AdminPayments";
+import AdminPurchases from "./pages/admin/AdminPurchases";
+import AdminActivityLogs from "./pages/admin/AdminActivityLogs";
 
 function App() {
   return (
     <Routes>
-
-      {/* Public Routes */}
+      {/* =========================
+          Public
+      ========================= */}
 
       <Route path="/" element={<LandingPage />} />
 
-      <Route
-        path="/admin/register"
-        element={<AdminRegister />}
-      />
+      {/* =========================
+          Admin Authentication
+      ========================= */}
 
-      <Route
-        path="/admin/login"
-        element={<AdminLogin />}
-      />
+      <Route path="/admin/login" element={<AdminLogin />} />
 
-      {/* Protected Routes */}
+      <Route path="/admin/register" element={<AdminRegister />} />
 
-      <Route element={<ProtectedRoute />}>
+      {/* =========================
+          Student Authentication
+      ========================= */}
 
-        <Route
-          path="/admin/dashboard"
-          element={<AdminDashboard />}
-        />
+      <Route path="/student/login" element={<StudentLogin />} />
 
+      <Route element={<StudentRoute />}>
+        <Route element={<StudentLayout />}>
+          <Route path="/student/dashboard" element={<StudentDashboard />} />
+
+          <Route path="/student/library" element={<StudentLibrary />} />
+
+          <Route
+            path="/student/library/:id"
+            element={<StudentDocumentViewer />}
+          />
+
+          <Route path="/student/purchases" element={<StudentPurchases />} />
+
+          <Route path="/student/payments" element={<StudentPayments />} />
+
+          <Route path="/student/profile" element={<StudentProfile />} />
+        </Route>
       </Route>
 
+      {/* =========================
+          Admin Protected
+      ========================= */}
+
+      <Route element={<AdminRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+          <Route path="/admin/students" element={<AdminStudents />} />
+
+          <Route path="/admin/documents" element={<AdminDocuments />} />
+
+          <Route path="/admin/payments" element={<AdminPayments />} />
+
+          <Route path="/admin/purchases" element={<AdminPurchases />} />
+
+          <Route path="/admin/activity-logs" element={<AdminActivityLogs />} />
+        </Route>
+      </Route>
     </Routes>
   );
 }

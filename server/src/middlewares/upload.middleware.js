@@ -2,16 +2,18 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// Upload directory
+// =============================
+// Upload Directory
+// =============================
 const uploadDir = path.join(__dirname, "../../uploads");
 
-// Create uploads folder if it doesn't exist
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-
-// Storage configuration
+// =============================
+// Storage
+// =============================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -22,22 +24,21 @@ const storage = multer.diskStorage({
       Date.now() +
       "-" +
       Math.round(Math.random() * 1e9) +
-      path.extname(file.originalname);
+      path.extname(file.originalname).toLowerCase();
 
     cb(null, uniqueName);
   },
 });
 
-
-// File filter
+// =============================
+// File Filter
+// =============================
 const fileFilter = (req, file, cb) => {
-  const allowedExtensions = [
-    ".pdf",
-    ".doc",
-    ".docx",
-  ];
+  const allowedExtensions = [".pdf", ".doc", ".docx"];
 
-  const extension = path.extname(file.originalname).toLowerCase();
+  const extension = path
+    .extname(file.originalname)
+    .toLowerCase();
 
   if (allowedExtensions.includes(extension)) {
     cb(null, true);
@@ -50,16 +51,16 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-
-// Multer configuration
+// =============================
+// Multer
+// =============================
 const upload = multer({
   storage,
   fileFilter,
 
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10 MB
+    fileSize: 10 * 1024 * 1024,
   },
 });
-
 
 module.exports = upload;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import api from "../services/api";
+import api from "../../services/api";
 
 function AdminRegister() {
   const navigate = useNavigate();
@@ -64,7 +64,6 @@ function AdminRegister() {
       setTimeout(() => {
         navigate("/admin/login");
       }, 1500);
-
     } catch (error) {
       console.error(
         "Admin registration error:",
@@ -81,23 +80,33 @@ function AdminRegister() {
   };
 
   return (
-    <div className="auth-page">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
 
-      <div className="auth-card">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
 
-        <div className="auth-header">
-          <h1>Admin Registration</h1>
+        {/* ================= Header ================= */}
 
-          <p>
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Admin Registration
+          </h1>
+
+          <p className="mt-2 text-sm text-gray-500">
             Create an administrator account
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        {/* ================= Form ================= */}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
 
           {/* Username */}
-          <div className="form-group">
-            <label htmlFor="username">
+
+          <div>
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Username
             </label>
 
@@ -109,12 +118,17 @@ function AdminRegister() {
               value={formData.username}
               onChange={handleChange}
               required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
           </div>
 
           {/* Email */}
-          <div className="form-group">
-            <label htmlFor="admin-email">
+
+          <div>
+            <label
+              htmlFor="admin-email"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Email
             </label>
 
@@ -126,12 +140,17 @@ function AdminRegister() {
               value={formData.email}
               onChange={handleChange}
               required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
           </div>
 
           {/* Password */}
-          <div className="form-group">
-            <label htmlFor="password">
+
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Password
             </label>
 
@@ -143,12 +162,17 @@ function AdminRegister() {
               value={formData.password}
               onChange={handleChange}
               required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
           </div>
 
           {/* Confirm Password */}
-          <div className="form-group">
-            <label htmlFor="confirmPassword">
+
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Confirm Password
             </label>
 
@@ -160,44 +184,57 @@ function AdminRegister() {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
           </div>
 
           {/* Success */}
+
           {message && (
-            <div className="success-message">
+            <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
               {message}
             </div>
           )}
 
           {/* Error */}
+
           {error && (
-            <div className="error-message">
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
               {error}
             </div>
           )}
 
+          {/* Register Button */}
+
           <button
             type="submit"
-            className="register-button"
             disabled={loading}
+            className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Creating Account..." : "Create Admin Account"}
           </button>
 
         </form>
 
-        <div className="auth-footer">
+        {/* ================= Footer ================= */}
 
-          <p>
+        <div className="mt-8 space-y-3 border-t border-gray-200 pt-6 text-center">
+
+          <p className="text-sm text-gray-500">
             Already have an admin account?
           </p>
 
-          <Link to="/admin/login">
+          <Link
+            to="/admin/login"
+            className="block text-sm font-semibold text-indigo-600 transition hover:text-indigo-700"
+          >
             Login here
           </Link>
 
-          <Link to="/">
+          <Link
+            to="/"
+            className="block text-sm text-gray-500 transition hover:text-gray-700"
+          >
             ← Back to Student Registration
           </Link>
 

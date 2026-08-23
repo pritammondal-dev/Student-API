@@ -16,11 +16,10 @@ const authorizeRoles = require("../middlewares/role.middleware");
 // Student Registration
 // =============================
 router.post(
-  "/",
+  "/register",
   validateCreateStudent,
   StudentController.createStudent
 );
-
 
 // =============================
 // Student Login
@@ -41,6 +40,23 @@ router.get(
   StudentController.getAllStudents
 );
 
+// =============================
+// Logged-in Student Profile
+// =============================
+
+router.get(
+  "/profile",
+  authenticateToken,
+  authorizeRoles("student"),
+  StudentController.getMyProfile
+);
+
+router.put(
+  "/profile",
+  authenticateToken,
+  authorizeRoles("student"),
+  StudentController.updateMyProfile
+);
 
 // =============================
 // Admin Only - Get Student

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import api from "../services/api";
+import api from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 function AdminLogin() {
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -38,12 +40,12 @@ function AdminLogin() {
 
       const token = response.data.token;
 
-      // Store JWT
-      localStorage.setItem("token", token);
+      login({
+        token,
+        role: "admin",
+      });
 
-      // Go to dashboard
       navigate("/admin/dashboard");
-
     } catch (error) {
       console.error(
         "Login error:",
@@ -60,23 +62,32 @@ function AdminLogin() {
   };
 
   return (
-    <div className="auth-page">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-8">
+      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
 
-      <div className="auth-card">
+        {/* Header */}
 
-        <div className="auth-header">
-          <h1>Admin Login</h1>
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Admin Login
+          </h1>
 
-          <p>
+          <p className="mt-2 text-sm text-gray-500">
             Sign in to manage student records
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        {/* Form */}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
 
           {/* Username */}
-          <div className="form-group">
-            <label htmlFor="login-username">
+
+          <div>
+            <label
+              htmlFor="login-username"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
               Username
             </label>
 
@@ -88,12 +99,17 @@ function AdminLogin() {
               value={formData.username}
               onChange={handleChange}
               required
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
           </div>
 
           {/* Password */}
-          <div className="form-group">
-            <label htmlFor="login-password">
+
+          <div>
+            <label
+              htmlFor="login-password"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
               Password
             </label>
 
@@ -105,44 +121,53 @@ function AdminLogin() {
               value={formData.password}
               onChange={handleChange}
               required
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
           </div>
 
           {/* Error */}
+
           {error && (
-            <div className="error-message">
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
               {error}
             </div>
           )}
 
+          {/* Login Button */}
+
           <button
             type="submit"
-            className="register-button"
             disabled={loading}
+            className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Signing In..." : "Login"}
           </button>
-
         </form>
 
-        <div className="auth-footer">
+        {/* Footer */}
 
-          <p>
+        <div className="mt-8 space-y-3 border-t border-gray-200 pt-6 text-center">
+
+          <p className="text-sm text-gray-500">
             Don't have an admin account?
           </p>
 
-          <Link to="/admin/register">
+          <Link
+            to="/admin/register"
+            className="block text-sm font-semibold text-indigo-600 transition hover:text-indigo-700"
+          >
             Create Admin Account
           </Link>
 
-          <Link to="/">
+          <Link
+            to="/"
+            className="block text-sm text-gray-500 transition hover:text-gray-700"
+          >
             ← Back to Student Registration
           </Link>
 
         </div>
-
       </div>
-
     </div>
   );
 }

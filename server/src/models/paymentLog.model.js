@@ -36,15 +36,16 @@ const PaymentLog = sequelize.define(
     },
 
     status: {
-      type: DataTypes.ENUM(
-        "created",
-        "success",
-        "failed",
-        "refunded"
-      ),
-      allowNull: false,
-      defaultValue: "created",
-    },
+  type: DataTypes.ENUM(
+    "created",
+    "success",
+    "failed",
+    "cancelled",
+    "refunded"
+  ),
+  allowNull: false,
+  defaultValue: "created",
+},
 
     payment_method: {
       type: DataTypes.STRING,
