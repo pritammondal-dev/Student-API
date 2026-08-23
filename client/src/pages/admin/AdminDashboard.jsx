@@ -2,15 +2,21 @@ import { useEffect, useState } from "react";
 import api from "../../services/api";
 
 function AdminDashboard() {
-const [students, setStudents] = useState([]);
+  const [students, setStudents] = useState([]);
 
-const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1);
-const [totalStudents, setTotalStudents] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalStudents, setTotalStudents] = useState(0);
 
-const [studentsPerPage, setStudentsPerPage] = useState(10);
-
-  const [payments, setPayments] = useState([]);
+  const [studentsPerPage, setStudentsPerPage] = useState(10);
+const [purchaseStatistics, setPurchaseStatistics] = useState({
+  totalPurchases: 0,
+  paidPurchases: 0,
+  pendingPurchases: 0,
+  failedPurchases: 0,
+  totalRevenue: 0,
+});
+  
   const [documents, setDocuments] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -29,18 +35,9 @@ const [studentsPerPage, setStudentsPerPage] = useState(10);
   // Statistics
   // =============================
 
-
-
   const totalFiles = documents.length;
 
-  const totalRevenue = payments
-    .filter((payment) => payment.status === "success")
-    .reduce(
-      (total, payment) =>
-        total + Number(payment.amount || 0),
-      0
-    );
-
+  const totalRevenue = Number(purchaseStatistics.totalRevenue || 0);
   // =============================
   // Fetch Dashboard Data
   // =============================
@@ -52,67 +49,70 @@ const [studentsPerPage, setStudentsPerPage] = useState(10);
 
       // Students
       const studentsResponse = await api.get(
-  `/students?page=${currentPage}&limit=${studentsPerPage}`
-);
+        `/students?page=${currentPage}&limit=${studentsPerPage}`,
+      );
 
-const studentData = studentsResponse.data.data || [];
-const pagination = studentsResponse.data.pagination;
+      const studentData = studentsResponse.data.data || [];
+      const pagination = studentsResponse.data.pagination;
 
-setStudents(studentData);
+      setStudents(studentData);
 
-setTotalStudents(
-  pagination?.totalItems || 0
-);
+      setTotalStudents(pagination?.totalItems || 0);
 
-setTotalPages(
-  pagination?.totalPages || 1
-);
+      setTotalPages(pagination?.totalPages || 1);
 
       // Documents
       try {
         const documentsResponse = await api.get("/documents");
 
-        setDocuments(
-          documentsResponse.data.data || []
-        );
+        setDocuments(documentsResponse.data.data || []);
       } catch (error) {
         console.error(
           "Documents API error:",
-          error.response?.data || error.message
+          error.response?.data || error.message,
         );
 
         setDocuments([]);
       }
 
-      // Payments
-      try {
-        const paymentsResponse = await api.get(
-          "/payments/admin"
-        );
+// =============================
+// Purchases Statistics
+// =============================
+try {
+  const purchasesResponse = await api.get("/purchases/admin");
 
-        setPayments(
-          paymentsResponse.data.data || []
-        );
-      } catch (error) {
-        console.error(
-          "Payments API error:",
-          error.response?.data || error.message
-        );
+  setPurchaseStatistics(
+    purchasesResponse.data.statistics || {
+      totalPurchases: 0,
+      paidPurchases: 0,
+      pendingPurchases: 0,
+      failedPurchases: 0,
+      totalRevenue: 0,
+    }
+  );
+} catch (error) {
+  console.error(
+    "Purchases API error:",
+    error.response?.data || error.message,
+  );
 
-        setPayments([]);
-      }
+  setPurchaseStatistics({
+    totalPurchases: 0,
+    paidPurchases: 0,
+    pendingPurchases: 0,
+    failedPurchases: 0,
+    totalRevenue: 0,
+  });
+}
     } catch (error) {
       console.error(
         "Students API error:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
 
       setStudents([]);
 
-      setError(
-        error.response?.data?.message ||
-          "Failed to load students."
-      );
+      setError(error.response?.data?.message || "Failed to load students.");
     } finally {
       setLoading(false);
     }
@@ -127,33 +127,25 @@ setTotalPages(
 
     const studentId = searchId.trim();
 
-  if (!studentId) {
-  setCurrentPage(1);
-  setError("");
-  return;
-}
+    if (!studentId) {
+      setCurrentPage(1);
+      setError("");
+      return;
+    }
 
     try {
       setSearchLoading(true);
       setError("");
 
-      const response = await api.get(
-        `/students/${studentId}`
-      );
+      const response = await api.get(`/students/${studentId}`);
 
       setStudents([response.data.data]);
     } catch (error) {
-      console.error(
-        "Search error:",
-        error.response?.data || error.message
-      );
+      console.error("Search error:", error.response?.data || error.message);
 
       setStudents([]);
 
-      setError(
-        error.response?.data?.message ||
-          "Student not found."
-      );
+      setError(error.response?.data?.message || "Student not found.");
     } finally {
       setSearchLoading(false);
     }
@@ -202,27 +194,17 @@ setTotalPages(
       setEditLoading(true);
       setError("");
 
-      const studentId =
-        editingStudent.student_id;
+      const studentId = editingStudent.student_id;
 
-      const response = await api.put(
-        `/students/${studentId}`,
-        {
-          name: editingStudent.name,
-          email: editingStudent.email,
-          phone: editingStudent.phone,
-          age: editingStudent.age
-            ? Number(editingStudent.age)
-            : null,
-          gender:
-            editingStudent.gender || null,
-        }
-      );
+      const response = await api.put(`/students/${studentId}`, {
+        name: editingStudent.name,
+        email: editingStudent.email,
+        phone: editingStudent.phone,
+        age: editingStudent.age ? Number(editingStudent.age) : null,
+        gender: editingStudent.gender || null,
+      });
 
-      console.log(
-        "Student updated:",
-        response.data
-      );
+      console.log("Student updated:", response.data);
 
       setEditingStudent(null);
 
@@ -230,13 +212,10 @@ setTotalPages(
     } catch (error) {
       console.error(
         "Update student error:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
 
-      setError(
-        error.response?.data?.message ||
-          "Failed to update student."
-      );
+      setError(error.response?.data?.message || "Failed to update student.");
     } finally {
       setEditLoading(false);
     }
@@ -262,17 +241,11 @@ setTotalPages(
       setDeleteLoading(true);
       setError("");
 
-      const studentId =
-        deletingStudent.student_id;
+      const studentId = deletingStudent.student_id;
 
-      const response = await api.delete(
-        `/students/${studentId}`
-      );
+      const response = await api.delete(`/students/${studentId}`);
 
-      console.log(
-        "Student deleted:",
-        response.data
-      );
+      console.log("Student deleted:", response.data);
 
       setDeletingStudent(null);
 
@@ -280,13 +253,10 @@ setTotalPages(
     } catch (error) {
       console.error(
         "Delete student error:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
 
-      setError(
-        error.response?.data?.message ||
-          "Failed to delete student."
-      );
+      setError(error.response?.data?.message || "Failed to delete student.");
     } finally {
       setDeleteLoading(false);
     }
@@ -297,20 +267,17 @@ setTotalPages(
   // =============================
 
   useEffect(() => {
-  fetchDashboardData();
-}, [currentPage, studentsPerPage]);
+    fetchDashboardData();
+  }, [currentPage, studentsPerPage]);
 
   return (
     <div className="min-h-full bg-gray-50 p-4 sm:p-6 lg:p-8">
-
       {/* =============================
           Dashboard Header
       ============================= */}
 
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">
-          Dashboard
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
 
         <p className="mt-1 text-sm text-gray-500">
           Manage student records from one place.
@@ -323,7 +290,6 @@ setTotalPages(
 
       <section className="mb-8">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-
           {/* Total Students */}
 
           <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
@@ -346,9 +312,7 @@ setTotalPages(
 
           <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
             <div>
-              <p className="text-sm font-medium text-gray-500">
-                Total Revenue
-              </p>
+              <p className="text-sm font-medium text-gray-500">Total Revenue</p>
 
               <h2 className="mt-2 text-2xl font-bold text-gray-900">
                 ₹{totalRevenue.toFixed(2)}
@@ -364,9 +328,7 @@ setTotalPages(
 
           <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
             <div>
-              <p className="text-sm font-medium text-gray-500">
-                Total Files
-              </p>
+              <p className="text-sm font-medium text-gray-500">Total Files</p>
 
               <h2 className="mt-2 text-2xl font-bold text-gray-900">
                 {totalFiles}
@@ -377,7 +339,6 @@ setTotalPages(
               📚
             </div>
           </div>
-
         </div>
       </section>
 
@@ -386,11 +347,9 @@ setTotalPages(
       ============================= */}
 
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-
         {/* Section Header */}
 
         <div className="flex flex-col gap-4 border-b border-gray-200 p-5 lg:flex-row lg:items-center lg:justify-between">
-
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
               Student Records
@@ -401,30 +360,30 @@ setTotalPages(
             </p>
             {/* Rows Per Page */}
 
-<div className="flex items-center gap-2">
-  <label
-    htmlFor="studentsPerPage"
-    className="text-sm text-gray-500"
-  >
-    Rows per page:
-  </label>
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="studentsPerPage"
+                className="text-sm text-gray-500"
+              >
+                Rows per page:
+              </label>
 
-  <select
-    id="studentsPerPage"
-    value={studentsPerPage}
-    onChange={(e) => {
-      setStudentsPerPage(Number(e.target.value));
-      setCurrentPage(1);
-    }}
-    className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-  >
-    <option value={5}>5</option>
-    <option value={10}>10</option>
-    <option value={20}>20</option>
-    <option value={50}>50</option>
-    <option value={100}>100</option>
-  </select>
-</div>
+              <select
+                id="studentsPerPage"
+                value={studentsPerPage}
+                onChange={(e) => {
+                  setStudentsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
           </div>
 
           {/* Search */}
@@ -437,9 +396,7 @@ setTotalPages(
               type="text"
               placeholder="Search by Student ID..."
               value={searchId}
-              onChange={(e) =>
-                setSearchId(e.target.value)
-              }
+              onChange={(e) => setSearchId(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 sm:w-64"
             />
 
@@ -448,19 +405,17 @@ setTotalPages(
               disabled={searchLoading}
               className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {searchLoading
-                ? "Searching..."
-                : "Search"}
+              {searchLoading ? "Searching..." : "Search"}
             </button>
 
             {searchId && (
               <button
                 type="button"
                 onClick={() => {
-  setSearchId("");
-  setCurrentPage(1);
-  setError("");
-}}
+                  setSearchId("");
+                  setCurrentPage(1);
+                  setError("");
+                }}
                 className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 Clear
@@ -473,9 +428,7 @@ setTotalPages(
 
         {loading && (
           <div className="flex min-h-48 items-center justify-center p-6">
-            <p className="text-sm text-gray-500">
-              Loading students...
-            </p>
+            <p className="text-sm text-gray-500">Loading students...</p>
           </div>
         )}
 
@@ -491,9 +444,7 @@ setTotalPages(
 
         {!loading && !error && (
           <div className="overflow-x-auto">
-
             <table className="w-full min-w-[900px] text-left">
-
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
                   <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -527,25 +478,18 @@ setTotalPages(
               </thead>
 
               <tbody className="divide-y divide-gray-100">
-
                 {students.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan="7"
-                      className="px-5 py-12 text-center"
-                    >
+                    <td colSpan="7" className="px-5 py-12 text-center">
                       <div className="flex flex-col items-center">
-                        <div className="mb-3 text-4xl">
-                          📋
-                        </div>
+                        <div className="mb-3 text-4xl">📋</div>
 
                         <h3 className="text-base font-semibold text-gray-900">
                           No students found
                         </h3>
 
                         <p className="mt-1 text-sm text-gray-500">
-                          There are no student records
-                          to display.
+                          There are no student records to display.
                         </p>
                       </div>
                     </td>
@@ -582,12 +526,9 @@ setTotalPages(
 
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-
                           <button
                             type="button"
-                            onClick={() =>
-                              handleEditClick(student)
-                            }
+                            onClick={() => handleEditClick(student)}
                             className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-100"
                           >
                             Edit
@@ -595,103 +536,87 @@ setTotalPages(
 
                           <button
                             type="button"
-                            onClick={() =>
-                              handleDeleteClick(student)
-                            }
+                            onClick={() => handleDeleteClick(student)}
                             className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-100"
                           >
                             Delete
                           </button>
-
                         </div>
                       </td>
                     </tr>
                   ))
                 )}
-
               </tbody>
             </table>
             {/* Pagination */}
 
-{!loading &&
-  !error &&
-  students.length > 0 && (
-    <div className="flex flex-col gap-4 border-t border-gray-200 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+            {!loading && !error && students.length > 0 && (
+              <div className="flex flex-col gap-4 border-t border-gray-200 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+                {/* Showing Info */}
 
-      {/* Showing Info */}
+                <p className="text-sm text-gray-500">
+                  Showing{" "}
+                  <span className="font-medium text-gray-900">
+                    {(currentPage - 1) * studentsPerPage + 1}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-medium text-gray-900">
+                    {Math.min(currentPage * studentsPerPage, totalStudents)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium text-gray-900">
+                    {totalStudents}
+                  </span>{" "}
+                  students
+                </p>
 
-      <p className="text-sm text-gray-500">
-        Showing{" "}
-        <span className="font-medium text-gray-900">
-          {(currentPage - 1) * studentsPerPage + 1}
-        </span>{" "}
-        to{" "}
-        <span className="font-medium text-gray-900">
-          {Math.min(
-            currentPage * studentsPerPage,
-            totalStudents
-          )}
-        </span>{" "}
-        of{" "}
-        <span className="font-medium text-gray-900">
-          {totalStudents}
-        </span>{" "}
-        students
-      </p>
+                {/* Pagination Buttons */}
 
-      {/* Pagination Buttons */}
+                <div className="flex items-center gap-1">
+                  {/* Previous */}
 
-      <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((prev) => prev - 1)}
+                    className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ←
+                  </button>
 
-        {/* Previous */}
+                  {/* Page Numbers */}
 
-        <button
-          type="button"
-          disabled={currentPage === 1}
-          onClick={() =>
-            setCurrentPage((prev) => prev - 1)
-          }
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          ←
-        </button>
+                  {Array.from(
+                    { length: totalPages },
+                    (_, index) => index + 1,
+                  ).map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                        currentPage === page
+                          ? "bg-indigo-600 text-white"
+                          : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
 
-        {/* Page Numbers */}
+                  {/* Next */}
 
-        {Array.from(
-          { length: totalPages },
-          (_, index) => index + 1
-        ).map((page) => (
-          <button
-            key={page}
-            type="button"
-            onClick={() => setCurrentPage(page)}
-            className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
-              currentPage === page
-                ? "bg-indigo-600 text-white"
-                : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            {page}
-          </button>
-        ))}
-
-        {/* Next */}
-
-        <button
-          type="button"
-          disabled={currentPage === totalPages}
-          onClick={() =>
-            setCurrentPage((prev) => prev + 1)
-          }
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          →
-        </button>
-
-      </div>
-    </div>
-  )}
+                  <button
+                    type="button"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                    className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -702,13 +627,10 @@ setTotalPages(
 
       {editingStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl">
-
             {/* Modal Header */}
 
             <div className="flex items-start justify-between border-b border-gray-200 p-6">
-
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">
                   Edit Student
@@ -721,9 +643,7 @@ setTotalPages(
 
               <button
                 type="button"
-                onClick={() =>
-                  setEditingStudent(null)
-                }
+                onClick={() => setEditingStudent(null)}
                 disabled={editLoading}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-xl text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -733,11 +653,7 @@ setTotalPages(
 
             {/* Edit Form */}
 
-            <form
-              onSubmit={handleUpdateStudent}
-              className="space-y-5 p-6"
-            >
-
+            <form onSubmit={handleUpdateStudent} className="space-y-5 p-6">
               {/* Student ID */}
 
               <div>
@@ -790,7 +706,6 @@ setTotalPages(
               {/* Phone + Age */}
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
                     Phone
@@ -818,7 +733,6 @@ setTotalPages(
                     className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                   />
                 </div>
-
               </div>
 
               {/* Gender */}
@@ -834,33 +748,22 @@ setTotalPages(
                   onChange={handleEditChange}
                   className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                 >
-                  <option value="">
-                    Select Gender
-                  </option>
+                  <option value="">Select Gender</option>
 
-                  <option value="Male">
-                    Male
-                  </option>
+                  <option value="Male">Male</option>
 
-                  <option value="Female">
-                    Female
-                  </option>
+                  <option value="Female">Female</option>
 
-                  <option value="Other">
-                    Other
-                  </option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
 
               {/* Buttons */}
 
               <div className="flex justify-end gap-3 border-t border-gray-200 pt-5">
-
                 <button
                   type="button"
-                  onClick={() =>
-                    setEditingStudent(null)
-                  }
+                  onClick={() => setEditingStudent(null)}
                   disabled={editLoading}
                   className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -872,13 +775,9 @@ setTotalPages(
                   disabled={editLoading}
                   className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {editLoading
-                    ? "Saving..."
-                    : "Save Changes"}
+                  {editLoading ? "Saving..." : "Save Changes"}
                 </button>
-
               </div>
-
             </form>
           </div>
         </div>
@@ -890,41 +789,33 @@ setTotalPages(
 
       {deletingStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-
           <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
-
             {/* Header */}
 
             <div className="flex items-center justify-between border-b border-gray-200 p-6">
-
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-lg font-bold text-red-600">
                 !
               </div>
 
               <button
                 type="button"
-                onClick={() =>
-                  setDeletingStudent(null)
-                }
+                onClick={() => setDeletingStudent(null)}
                 disabled={deleteLoading}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-xl text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 ×
               </button>
-
             </div>
 
             {/* Content */}
 
             <div className="p-6">
-
               <h3 className="text-lg font-semibold text-gray-900">
                 Delete Student?
               </h3>
 
               <p className="mt-2 text-sm text-gray-500">
-                Are you sure you want to delete this
-                student?
+                Are you sure you want to delete this student?
               </p>
 
               <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -940,18 +831,14 @@ setTotalPages(
               <p className="mt-4 text-sm font-medium text-red-600">
                 This action cannot be undone.
               </p>
-
             </div>
 
             {/* Buttons */}
 
             <div className="flex justify-end gap-3 border-t border-gray-200 p-6">
-
               <button
                 type="button"
-                onClick={() =>
-                  setDeletingStudent(null)
-                }
+                onClick={() => setDeletingStudent(null)}
                 disabled={deleteLoading}
                 className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -964,13 +851,9 @@ setTotalPages(
                 disabled={deleteLoading}
                 className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {deleteLoading
-                  ? "Deleting..."
-                  : "Delete Student"}
+                {deleteLoading ? "Deleting..." : "Delete Student"}
               </button>
-
             </div>
-
           </div>
         </div>
       )}
