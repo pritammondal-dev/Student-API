@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../services/api";
 
 function StudentLibrary() {
@@ -14,6 +14,7 @@ function StudentLibrary() {
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState("");
   const [paymentMessage, setPaymentMessage] = useState("");
+  const paymentFailedRef = useRef(false);
 
   // =============================
   // Fetch Documents
@@ -24,24 +25,20 @@ function StudentLibrary() {
       setLoading(true);
       setError("");
 
-      const [documentsResponse, purchasesResponse] =
-        await Promise.all([
-          api.get("/documents"),
-          api.get("/purchases/my-purchases"),
-        ]);
+      const [documentsResponse, purchasesResponse] = await Promise.all([
+        api.get("/documents"),
+        api.get("/purchases/my-purchases"),
+      ]);
 
       setDocuments(documentsResponse.data.data || []);
       setPurchasedDocuments(purchasesResponse.data.data || []);
     } catch (error) {
       console.error(
         "Failed to fetch library data:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
 
-      setError(
-        error.response?.data?.message ||
-          "Unable to load library."
-      );
+      setError(error.response?.data?.message || "Unable to load library.");
     } finally {
       setLoading(false);
     }
@@ -58,8 +55,7 @@ function StudentLibrary() {
   const isPurchased = (documentId) => {
     return purchasedDocuments.some(
       (purchase) =>
-        purchase.document_id === documentId &&
-        purchase.status === "paid"
+        purchase.document_id === documentId && purchase.status === "paid",
     );
   };
 
@@ -84,16 +80,10 @@ function StudentLibrary() {
       const searchText = search.toLowerCase();
 
       const matchesSearch =
-        document.title
-          ?.toLowerCase()
-          .includes(searchText) ||
-        document.description
-          ?.toLowerCase()
-          .includes(searchText);
+        document.title?.toLowerCase().includes(searchText) ||
+        document.description?.toLowerCase().includes(searchText);
 
-      const matchesSubject =
-        subject === "all" ||
-        document.subject === subject;
+      const matchesSubject = subject === "all" || document.subject === subject;
 
       return matchesSearch && matchesSubject;
     });
@@ -110,26 +100,21 @@ function StudentLibrary() {
       setPaymentStatus("");
       setPaymentMessage("");
 
+      paymentFailedRef.current = false;
+
       // Create Razorpay Order
-      const response = await api.post(
-        "/payments/create-order",
-        {
-          document_id: documentId,
-        }
-      );
+      const response = await api.post("/payments/create-order", {
+        document_id: documentId,
+      });
 
       const order = response.data.data;
 
       if (!order?.order_id) {
-        throw new Error(
-          "Payment order was not created."
-        );
+        throw new Error("Payment order was not created.");
       }
 
       if (!window.Razorpay) {
-        throw new Error(
-          "Razorpay Checkout is not loaded."
-        );
+        throw new Error("Razorpay Checkout is not loaded.");
       }
 
       // Razorpay Options
@@ -150,19 +135,13 @@ function StudentLibrary() {
 
         handler: async function (paymentResponse) {
           try {
-            const verifyResponse = await api.post(
-              "/payments/verify",
-              {
-                razorpay_order_id:
-                  paymentResponse.razorpay_order_id,
+            const verifyResponse = await api.post("/payments/verify", {
+              razorpay_order_id: paymentResponse.razorpay_order_id,
 
-                razorpay_payment_id:
-                  paymentResponse.razorpay_payment_id,
+              razorpay_payment_id: paymentResponse.razorpay_payment_id,
 
-                razorpay_signature:
-                  paymentResponse.razorpay_signature,
-              }
-            );
+              razorpay_signature: paymentResponse.razorpay_signature,
+            });
 
             if (verifyResponse.data.success) {
               await fetchDocuments();
@@ -170,19 +149,17 @@ function StudentLibrary() {
               setPaymentStatus("success");
 
               setPaymentMessage(
-                "Payment successful! Your document has been purchased successfully."
+                "Payment successful! Your document has been purchased successfully.",
               );
             }
           } catch (error) {
             console.error(
               "Payment verification error:",
-              error.response?.data ||
-                error.message
+              error.response?.data || error.message,
             );
 
             setError(
-              error.response?.data?.message ||
-                "Payment verification failed."
+              error.response?.data?.message || "Payment verification failed.",
             );
           } finally {
             setProcessingPayment(false);
@@ -195,32 +172,28 @@ function StudentLibrary() {
 
         modal: {
           ondismiss: async function () {
+            if (paymentFailedRef.current) {
+              return;
+            }
+
             try {
-              await api.post(
-                "/payments/failed",
-                {
-                  razorpay_order_id:
-                    order.order_id,
-                }
-              );
+              await api.post("/payments/failed", {
+                razorpay_order_id: order.order_id,
+                failure_reason: "Payment cancelled by user",
+              });
 
               setPaymentStatus("failed");
 
-              setPaymentMessage(
-                "Payment cancelled. No amount was charged."
-              );
+              setPaymentMessage("Payment cancelled. No amount was charged.");
             } catch (error) {
               console.error(
                 "Failed to update cancelled payment:",
-                error.response?.data ||
-                  error.message
+                error.response?.data || error.message,
               );
 
               setPaymentStatus("failed");
 
-              setPaymentMessage(
-                "Payment was cancelled."
-              );
+              setPaymentMessage("Payment was cancelled.");
             } finally {
               setProcessingPayment(false);
             }
@@ -233,66 +206,53 @@ function StudentLibrary() {
       };
 
       // Create Razorpay instance
-      const razorpay = new window.Razorpay(
-        options
-      );
+      const razorpay = new window.Razorpay(options);
 
       // =============================
       // Payment Failed
       // =============================
 
-      razorpay.on(
-        "payment.failed",
-        async function (response) {
+      razorpay.on("payment.failed", async function (response) {
+        console.error("Payment failed:", response);
+
+        paymentFailedRef.current = true;
+
+        const failureReason =
+          response.error?.description ||
+          response.error?.reason ||
+          response.error?.code ||
+          "Payment failed";
+
+        try {
+          await api.post("/payments/failed", {
+            razorpay_order_id: response.error?.metadata?.order_id,
+
+            razorpay_payment_id: response.error?.metadata?.payment_id,
+
+            failure_reason: failureReason,
+          });
+        } catch (error) {
           console.error(
-            "Payment failed:",
-            response
+            "Failed to update payment:",
+            error.response?.data || error.message,
           );
-
-          try {
-            await api.post(
-              "/payments/failed",
-              {
-                razorpay_order_id:
-                  response.error?.metadata
-                    ?.order_id,
-
-                razorpay_payment_id:
-                  response.error?.metadata
-                    ?.payment_id,
-              }
-            );
-          } catch (error) {
-            console.error(
-              "Failed to update payment:",
-              error.response?.data ||
-                error.message
-            );
-          }
-
-          setPaymentStatus("failed");
-
-          setPaymentMessage(
-            response.error?.description ||
-              "Payment failed. Please try again."
-          );
-
-          setProcessingPayment(false);
         }
-      );
+
+        setPaymentStatus("failed");
+
+        setPaymentMessage(failureReason);
+
+        setProcessingPayment(false);
+      });
 
       razorpay.open();
     } catch (error) {
-      console.error(
-        "Payment error:",
-        error.response?.data ||
-          error.message
-      );
+      console.error("Payment error:", error.response?.data || error.message);
 
       setError(
         error.response?.data?.message ||
           error.message ||
-          "Unable to start payment."
+          "Unable to start payment.",
       );
 
       setProcessingPayment(false);
@@ -306,13 +266,9 @@ function StudentLibrary() {
   if (loading) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-semibold text-gray-900">
-          Library
-        </h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Library</h1>
 
-        <p className="mt-4 text-sm text-gray-500">
-          Loading documents...
-        </p>
+        <p className="mt-4 text-sm text-gray-500">Loading documents...</p>
       </div>
     );
   }
@@ -324,14 +280,10 @@ function StudentLibrary() {
   if (error) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-semibold text-gray-900">
-          Library
-        </h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Library</h1>
 
         <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-5">
-          <p className="text-sm text-red-600">
-            {error}
-          </p>
+          <p className="text-sm text-red-600">{error}</p>
 
           <button
             type="button"
@@ -347,7 +299,6 @@ function StudentLibrary() {
 
   return (
     <div className="p-6">
-
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">
@@ -369,11 +320,8 @@ function StudentLibrary() {
           }`}
         >
           <div className="flex items-start gap-3">
-
             <div className="text-xl">
-              {paymentStatus === "success"
-                ? "✅"
-                : "❌"}
+              {paymentStatus === "success" ? "✅" : "❌"}
             </div>
 
             <div>
@@ -399,51 +347,39 @@ function StudentLibrary() {
                 {paymentMessage}
               </p>
             </div>
-
           </div>
         </div>
       )}
 
       {/* Filters */}
       <div className="mb-6 flex flex-col gap-3 md:flex-row">
-
         {/* Search */}
         <input
           type="text"
           placeholder="Search documents..."
           value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
+          onChange={(e) => setSearch(e.target.value)}
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-500 focus:ring-2 focus:ring-gray-100 md:flex-1"
         />
 
         {/* Subject */}
         <select
           value={subject}
-          onChange={(e) =>
-            setSubject(e.target.value)
-          }
+          onChange={(e) => setSubject(e.target.value)}
           className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition focus:border-gray-500"
         >
           {subjects.map((item) => (
             <option key={item} value={item}>
-              {item === "all"
-                ? "All Subjects"
-                : item}
+              {item === "all" ? "All Subjects" : item}
             </option>
           ))}
         </select>
-
       </div>
 
       {/* Result Count */}
       <div className="mb-4 text-sm text-gray-500">
         {filteredDocuments.length} document
-        {filteredDocuments.length !== 1
-          ? "s"
-          : ""}{" "}
-        found
+        {filteredDocuments.length !== 1 ? "s" : ""} found
       </div>
 
       {/* Documents */}
@@ -461,19 +397,15 @@ function StudentLibrary() {
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-
           {filteredDocuments.map((document) => (
             <div
               key={document.id}
               className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
-
               {/* Badge */}
               <div className="mb-4 flex items-center justify-between gap-3">
-
                 <span className="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
-                  {document.subject ||
-                    "General"}
+                  {document.subject || "General"}
                 </span>
 
                 {isPurchased(document.id) ? (
@@ -481,11 +413,8 @@ function StudentLibrary() {
                     Purchased
                   </span>
                 ) : (
-                  <span className="text-xs text-gray-400">
-                    #{document.id}
-                  </span>
+                  <span className="text-xs text-gray-400">#{document.id}</span>
                 )}
-
               </div>
 
               {/* Title */}
@@ -495,17 +424,13 @@ function StudentLibrary() {
 
               {/* Description */}
               <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-500">
-                {document.description ||
-                  "No description available."}
+                {document.description || "No description available."}
               </p>
 
               {/* Price + Action */}
               <div className="mt-5 flex items-center justify-between gap-4">
-
                 <div>
-                  <p className="text-xs text-gray-400">
-                    Price
-                  </p>
+                  <p className="text-xs text-gray-400">Price</p>
 
                   <p className="text-lg font-semibold text-gray-900">
                     ₹{document.price}
@@ -516,8 +441,7 @@ function StudentLibrary() {
                   <button
                     type="button"
                     onClick={() => {
-                      window.location.href =
-                        `/student/library/${document.id}`;
+                      window.location.href = `/student/library/${document.id}`;
                     }}
                     className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
                   >
@@ -526,24 +450,16 @@ function StudentLibrary() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() =>
-                      handlePurchase(
-                        document.id
-                      )
-                    }
+                    onClick={() => handlePurchase(document.id)}
                     disabled={processingPayment}
                     className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {processingPayment
-                      ? "Processing..."
-                      : "Purchase"}
+                    {processingPayment ? "Processing..." : "Purchase"}
                   </button>
                 )}
-
               </div>
             </div>
           ))}
-
         </div>
       )}
     </div>

@@ -227,7 +227,11 @@ const verifyPayment = async (req, res, next) => {
 // =============================
 const paymentFailed = async (req, res, next) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id } = req.body;
+    const {
+  razorpay_order_id,
+  razorpay_payment_id,
+  failure_reason,
+} = req.body;
 
     if (!razorpay_order_id) {
       return res.status(400).json({
@@ -264,13 +268,15 @@ const paymentFailed = async (req, res, next) => {
       },
     });
 
-    if (paymentLog) {
-      await paymentLog.update({
-        payment_id: razorpay_payment_id || null,
-        status: "failed",
-        payment_method: "razorpay",
-      });
-    }
+ if (paymentLog) {
+  await paymentLog.update({
+    payment_id: razorpay_payment_id || null,
+    status: "failed",
+    payment_method: "razorpay",
+    failure_reason:
+      failure_reason || "Payment failed",
+  });
+}
 
     return res.status(200).json({
       success: true,
@@ -433,8 +439,8 @@ const getAllPayments = async (req, res, next) => {
         amount: payment.amount,
         status: payment.status,
         payment_method: payment.payment_method,
-        created_at: payment.created_at,
-
+failure_reason: payment.failure_reason,
+created_at: payment.created_at,
         document: payment.purchase?.document
           ? {
               id: payment.purchase.document.id,

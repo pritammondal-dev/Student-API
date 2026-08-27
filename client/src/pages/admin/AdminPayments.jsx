@@ -31,54 +31,51 @@ function AdminPayments() {
   // =============================
 
   const fetchPayments = async () => {
-  try {
-    setLoading(true);
-    setError("");
+    try {
+      setLoading(true);
+      setError("");
 
-    const response = await api.get("/payments/admin", {
-      params: {
-        page,
-        limit,
-        status: statusFilter,
-        search,
-      },
-    });
+      const response = await api.get("/payments/admin", {
+        params: {
+          page,
+          limit,
+          status: statusFilter,
+          search,
+        },
+      });
 
-    setPayments(response.data.data || []);
+      setPayments(response.data.data || []);
 
-    setStatistics(
-      response.data.statistics || {
-        totalTransactions: 0,
-        successfulPayments: 0,
-        failedPayments: 0,
-        totalRevenue: 0,
-      }
-    );
+      setStatistics(
+        response.data.statistics || {
+          totalTransactions: 0,
+          successfulPayments: 0,
+          failedPayments: 0,
+          totalRevenue: 0,
+        },
+      );
 
-    setPagination(
-      response.data.pagination || {
-        totalItems: 0,
-        currentPage: 1,
-        totalPages: 1,
-        limit,
-      }
-    );
+      setPagination(
+        response.data.pagination || {
+          totalItems: 0,
+          currentPage: 1,
+          totalPages: 1,
+          limit,
+        },
+      );
+    } catch (error) {
+      console.error(
+        "Admin payments API error:",
+        error.response?.data || error.message,
+      );
 
-    
-  } catch (error) {
-    console.error(
-      "Admin payments API error:",
-      error.response?.data || error.message
-    );
-
-    setError(
-      error.response?.data?.message ||
-        "Failed to load payment records."
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+      setError(
+        error.response?.data?.message || "Failed to load payment records.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
   // =============================
   // Load Payments
   // =============================
@@ -86,55 +83,6 @@ function AdminPayments() {
   useEffect(() => {
     fetchPayments();
   }, [page, limit, statusFilter, search]);
-
-  // =============================
-  // Statistics
-  // =============================
-
- 
-
-
-  // const successfulPayments = payments.filter(
-  //   (payment) => payment.status === "success",
-  // );
-
-  // const failedPayments = payments.filter(
-  //   (payment) => payment.status === "failed",
-  // );
-
-  // const totalRevenue = successfulPayments.reduce(
-  //   (total, payment) => total + Number(payment.amount || 0),
-  //   0,
-  // );
-
-  // =============================
-  // Filter Payments
-  // =============================
-
-  // const filteredPayments = payments.filter((payment) => {
-  //   const searchText = search.toLowerCase().trim();
-
-  //   const matchesSearch =
-  //     !searchText ||
-  //     String(payment.student_id)
-  //       .toLowerCase()
-  //       .includes(searchText) ||
-  //     String(payment.payment_id || "")
-  //       .toLowerCase()
-  //       .includes(searchText) ||
-  //     String(payment.order_id || "")
-  //       .toLowerCase()
-  //       .includes(searchText) ||
-  //     String(payment.document?.title || "")
-  //       .toLowerCase()
-  //       .includes(searchText);
-
-  //   const matchesStatus =
-  //     statusFilter === "all" ||
-  //     payment.status === statusFilter;
-
-  //   return matchesSearch && matchesStatus;
-  // });
 
   return (
     <div className="min-h-full bg-gray-50 p-4 sm:p-6 lg:p-8">
@@ -325,7 +273,7 @@ function AdminPayments() {
 
         {!loading && !error && (
           <div className="w-full overflow-x-auto">
-            <table className="w-full min-w-[1000px] text-left">
+            <table className="w-full min-w-[1200px] text-left">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
                   <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -357,6 +305,10 @@ function AdminPayments() {
                   </th>
 
                   <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Failure Reason
+                  </th>
+
+                  <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wide text-gray-500">
                     Date
                   </th>
                 </tr>
@@ -365,7 +317,7 @@ function AdminPayments() {
               <tbody className="divide-y divide-gray-100">
                 {payments.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-12 text-center">
+                    <td colSpan="9" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-2xl">
                           💳
@@ -437,6 +389,17 @@ function AdminPayments() {
 
                       <td className="px-5 py-4 text-sm text-gray-600">
                         {payment.payment_id || "-"}
+                      </td>
+
+                      {/* Failure Reason */}
+
+                      <td
+                        className="max-w-[280px] px-5 py-4 text-sm text-gray-600"
+                        title={payment.failure_reason || ""}
+                      >
+                        {payment.status === "failed"
+                          ? payment.failure_reason || "Unknown failure"
+                          : "-"}
                       </td>
 
                       <td className="px-5 py-4 text-sm text-gray-600">

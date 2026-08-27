@@ -48,9 +48,14 @@ const PaymentLog = sequelize.define(
 },
 
     payment_method: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
+  type: DataTypes.STRING,
+  allowNull: true,
+},
+
+failure_reason: {
+  type: DataTypes.TEXT,
+  allowNull: true,
+},
   },
   {
     tableName: "payment_logs",
