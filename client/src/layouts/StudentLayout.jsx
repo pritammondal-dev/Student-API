@@ -1,14 +1,18 @@
+import { useCallback } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import useIdleLogout from "../hooks/useIdleLogout";
 
 function StudentLayout() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-    navigate("/student/login");
-  };
+const handleLogout = useCallback(() => {
+  logout();
+  navigate("/student/login");
+}, [logout, navigate]);
+
+  useIdleLogout(handleLogout);
 
   const navLinkClass = ({ isActive }) =>
     `flex w-full items-center rounded-lg px-4 py-3 text-sm font-semibold transition-colors duration-200 ${

@@ -1,4 +1,9 @@
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -16,7 +21,8 @@ export function AuthProvider({ children }) {
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
-  const login = ({ token, role, user = null }) => {
+  const login = useCallback(
+  ({ token, role, user = null }) => {
     localStorage.setItem("token", token);
     localStorage.setItem("role", role);
 
@@ -29,17 +35,19 @@ export function AuthProvider({ children }) {
     setToken(token);
     setRole(role);
     setUser(user);
-  };
+  },
+  []
+);
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("user");
+  const logout = useCallback(() => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  localStorage.removeItem("user");
 
-    setToken(null);
-    setRole(null);
-    setUser(null);
-  };
+  setToken(null);
+  setRole(null);
+  setUser(null);
+}, []);
 
   const isAuthenticated = Boolean(token);
 

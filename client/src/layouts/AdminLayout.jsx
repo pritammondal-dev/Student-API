@@ -1,14 +1,23 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useCallback } from "react";
+import {
+  NavLink,
+  Outlet,
+  useNavigate,
+} from "react-router-dom";
+
 import { useAuth } from "../context/AuthContext";
+import useIdleLogout from "../hooks/useIdleLogout";
 
 function AdminLayout() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-    navigate("/admin/login");
-  };
+const handleLogout = useCallback(() => {
+  logout();
+  navigate("/admin/login");
+}, [logout, navigate]);
+
+useIdleLogout(handleLogout);
 
   const navLinkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
