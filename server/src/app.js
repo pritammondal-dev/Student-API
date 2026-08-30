@@ -10,6 +10,9 @@ const libraryRoutes = require("./routes/library.routes");
 const adminRoutes = require("./routes/admin.routes");
 const purchaseRoutes = require("./routes/purchase.routes");
 const activityLogRoutes = require("./routes/activityLog.routes");
+const noticeRoutes = require("./routes/notice.routes");
+const eventRoutes = require("./routes/event.routes");
+const publicRoutes = require("./routes/public.routes");
 
 const app = express();
 
@@ -53,6 +56,21 @@ app.use("/api/v1/students", studentRoutes);
 // Document Routes
 // =============================
 app.use("/api/v1/documents", documentRoutes);
+
+// =============================
+// Public Routes
+// =============================
+app.use("/api/v1/public", publicRoutes);
+
+// =============================
+// Notice Routes
+// =============================
+app.use("/api/v1/notices", noticeRoutes);
+
+// =============================
+// Event Routes
+// =============================
+app.use("/api/v1/events", eventRoutes);
 
 // =============================
 // Payment Routes

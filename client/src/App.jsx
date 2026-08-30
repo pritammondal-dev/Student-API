@@ -6,6 +6,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminRegister from "./pages/admin/AdminRegister";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
+import StudentRegister from "./pages/student/StudentRegister";
 import StudentLogin from "./pages/student/StudentLogin";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentLibrary from "./pages/student/StudentLibrary";
@@ -24,6 +25,8 @@ import AdminDocuments from "./pages/admin/AdminDocuments";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminPurchases from "./pages/admin/AdminPurchases";
 import AdminActivityLogs from "./pages/admin/AdminActivityLogs";
+import AdminNotices from "./pages/admin/AdminNotices";
+import AdminEvents from "./pages/admin/AdminEvents";
 
 function App() {
   return (
@@ -47,6 +50,11 @@ function App() {
       ========================= */}
 
       <Route path="/student/login" element={<StudentLogin />} />
+
+      <Route
+  path="/student/register"
+  element={<StudentRegister />}
+/>
 
       <Route element={<StudentRoute />}>
         <Route element={<StudentLayout />}>
@@ -84,6 +92,14 @@ function App() {
           <Route path="/admin/purchases" element={<AdminPurchases />} />
 
           <Route path="/admin/activity-logs" element={<AdminActivityLogs />} />
+
+          <Route path="/admin/notices" element={<AdminNotices />} />
+
+          <Route
+      path="/admin/events"
+      element={<AdminEvents />}
+    />
+          
         </Route>
       </Route>
     </Routes>

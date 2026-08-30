@@ -163,7 +163,7 @@ function AdminLogin() {
             to="/"
             className="block text-sm text-gray-500 transition hover:text-gray-700"
           >
-            ← Back to Student Registration
+            ← Home
           </Link>
 
         </div>

@@ -1,9 +1,5 @@
 import { useCallback } from "react";
-import {
-  NavLink,
-  Outlet,
-  useNavigate,
-} from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 import useIdleLogout from "../hooks/useIdleLogout";
@@ -12,12 +8,12 @@ function AdminLayout() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-const handleLogout = useCallback(() => {
-  logout();
-  navigate("/admin/login");
-}, [logout, navigate]);
+  const handleLogout = useCallback(() => {
+    logout();
+    navigate("/admin/login");
+  }, [logout, navigate]);
 
-useIdleLogout(handleLogout);
+  useIdleLogout(handleLogout);
 
   const navLinkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -63,52 +59,44 @@ useIdleLogout(handleLogout);
 
         <aside className="w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-white">
           <nav className="space-y-2 p-4">
-            <NavLink
-              to="/admin/dashboard"
-              className={navLinkClass}
-            >
+            <NavLink to="/admin/dashboard" className={navLinkClass}>
               <span className="text-lg">📊</span>
               <span>Dashboard</span>
             </NavLink>
 
-            <NavLink
-              to="/admin/students"
-              className={navLinkClass}
-            >
+            <NavLink to="/admin/students" className={navLinkClass}>
               <span className="text-lg">👨‍🎓</span>
               <span>Students</span>
             </NavLink>
 
-            <NavLink
-              to="/admin/documents"
-              className={navLinkClass}
-            >
+            <NavLink to="/admin/documents" className={navLinkClass}>
               <span className="text-lg">📚</span>
               <span>Documents</span>
             </NavLink>
 
-            <NavLink
-              to="/admin/payments"
-              className={navLinkClass}
-            >
+            <NavLink to="/admin/payments" className={navLinkClass}>
               <span className="text-lg">💳</span>
               <span>Payments</span>
             </NavLink>
 
-            <NavLink
-              to="/admin/purchases"
-              className={navLinkClass}
-            >
+            <NavLink to="/admin/purchases" className={navLinkClass}>
               <span className="text-lg">🛒</span>
               <span>Purchases</span>
             </NavLink>
 
-            <NavLink
-              to="/admin/activity-logs"
-              className={navLinkClass}
-            >
+            <NavLink to="/admin/activity-logs" className={navLinkClass}>
               <span className="text-lg">📋</span>
               <span>Activity Logs</span>
+            </NavLink>
+
+            <NavLink to="/admin/notices" className={navLinkClass}>
+              <span className="text-lg">📢</span>
+              <span>Notices</span>
+            </NavLink>
+
+            <NavLink to="/admin/events" className={navLinkClass}>
+              <span className="text-lg">📅</span>
+              <span>Events</span>
             </NavLink>
           </nav>
         </aside>

@@ -164,6 +164,13 @@ function StudentLogin() {
             to="/"
             className="font-medium text-gray-600 transition hover:text-gray-900 hover:underline"
           >
+            ← Home
+          </Link>
+
+          <Link
+            to="/student/register"
+            className="font-medium text-gray-600 transition hover:text-gray-900 hover:underline"
+          >
             ← Back to Student Registration
           </Link>
 
